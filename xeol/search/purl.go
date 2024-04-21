@@ -47,7 +47,7 @@ func ByDistroCpe(store eol.Provider, distro *linux.Release, eolMatchDate time.Ti
 		return match.Match{}, "", nil
 	}
 
-	log.Debugf("matching distro %s with version %s", distro.Name, version)
+	log.Debugf("attempting to match distro %s with version %s", distro.Name, version)
 	cycle, err := cycleMatch(version, cycles, eolMatchDate)
 	if err != nil {
 		log.Warnf("failed to match cycle for distro %s: %v", distro.Name, err)
@@ -65,7 +65,7 @@ func ByDistroCpe(store eol.Provider, distro *linux.Release, eolMatchDate time.Ti
 		}, distroCPE, nil
 	}
 
-	log.Warnf("failed to match cycle for distro %s: %v", distro.Name, err)
+	log.Debugf("matched cycle for distro %s: %v", distro.Name, version)
 	return match.Match{}, "", nil
 }
 
@@ -82,7 +82,12 @@ func normalizeSemver(version string) string {
 	// Example: 5.0.20.5194 -> 5.0.20
 	// Example: 2.0.4.RELEASE -> 2.0.4
 	fourCompRe := regexp.MustCompile(`^(\d+\.\d+\.\d+)\.\w+`)
-	return fourCompRe.ReplaceAllString(version, "$1")
+	version = fourCompRe.ReplaceAllString(version, "$1")
+
+	// Handle packages with tilde (~) characters
+	// Example: 1.23.3-1~bullseye
+	tildeRe := regexp.MustCompile(`^(\d+\.\d+\.\d+)-\d+~\w+`)
+	return tildeRe.ReplaceAllString(version, "$1")
 }
 
 func versionLength(version string) int {
